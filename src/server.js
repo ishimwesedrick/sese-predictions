@@ -1,7 +1,29 @@
 'use strict';
 
 const http = require('http');
+function readBody(req) {
+  return new Promise((resolve, reject) => {
+    let raw = '';
 
+    req.on('data', chunk => {
+      raw += chunk;
+    });
+
+    req.on('end', () => {
+      try {
+        if (!raw || raw.trim() === '') {
+          return reject(new Error('Empty body'));
+        }
+
+        resolve(JSON.parse(raw));
+      } catch (e) {
+        reject(new Error('Invalid JSON body'));
+      }
+    });
+
+    req.on('error', reject);
+  });
+}
 const PORT = process.env.PORT || 3000;
 const VERSION = '1.0.0';
 
