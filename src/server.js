@@ -35,10 +35,21 @@ async function router(req, res) {
           return send(res, 400, { error: 'Missing required fields' });
         }
 
-        // simple dummy prediction (we will replace later with engine if needed)
-        const homeWin = 0.4;
-        const draw = 0.3;
-        const awayWin = 0.3;
+        const result = predict(
+  home,
+  away,
+  getLeagueModel((league || 'DEFAULT').toUpperCase()),
+  DEFAULT_WEIGHTS
+);
+
+return send(res, 200, {
+  homeWin: result.homeWin,
+  draw: result.draw,
+  awayWin: result.awayWin,
+  prediction: result.prediction,
+  confidence: result.confidence,
+  modelVersion: VERSION
+});
 
         return send(res, 200, {
           homeWin,
