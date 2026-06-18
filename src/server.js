@@ -59,21 +59,40 @@ async function router(req, res) {
           return send(res, 400, { error: 'Missing required fields' });
         }
 
-        const result = predict(
-  home,
-  away,
-  getLeagueModel((league || 'DEFAULT').toUpperCase()),
-  DEFAULT_WEIGHTS
-);
+        let body = '';
 
-return send(res, 200, {
-  homeWin: result.homeWin,
-  draw: result.draw,
-  awayWin: result.awayWin,
-  prediction: result.prediction,
-  confidence: result.confidence,
-  modelVersion: VERSION
+req.on('data', chunk => body += chunk);
+
+req.on('end', () => {
+  try {
+    const data = JSON.parse(body || '{}');
+
+    if (!data.homeTeam || !data.awayTeam) {
+      return send(res, 400, { error: 'Missing required fields' });
+    }
+
+    const home = buildStats(data.homeTeam, data.homeStats || {});
+    const away = buildStats(data.awayTeam, data.awayStats || {});
+
+    const leagueModel = getLeagueModel((data.league || 'DEFAULT').toUpperCase());
+
+    const result = predict(home, away, leagueModel, DEFAULT_WEIGHTS);
+
+    return send(res, 200, {
+      homeWin: result.homeWin,
+      draw: result.draw,
+      awayWin: result.awayWin,
+      prediction: result.prediction,
+      confidence: result.confidence,
+      modelVersion: VERSION
+    });
+
+  } catch (e) {
+    return send(res, 400, { error: 'Invalid JSON' });
+  }
 });
+
+return;
 
         return send(res, 200, {
           homeWin,
