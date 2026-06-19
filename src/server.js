@@ -1,4 +1,4 @@
-‘use strict’;
+use strict’;
 
 const http = require(‘http’);
 
@@ -51,30 +51,34 @@ uptime: Math.floor(process.uptime())
 
 // Predict route
 if (url === ‘/predict’ && method === ‘POST’) {
-let raw = ‘’;
-
-req.on('data', chunk => {
+let raw = ‘’;req.on('data', chunk => {
   raw += chunk;
 });
+
 req.on('end', () => {
   try {
     const data = JSON.parse(raw || '{}');
+
     if (!data.homeTeam || !data.awayTeam) {
       return send(res, 400, {
         error: 'Missing required fields'
       });
     }
+
     const home = buildStats(data.homeTeam);
     const away = buildStats(data.awayTeam);
+
     const leagueModel = getLeagueModel(
       (data.league || 'DEFAULT').toUpperCase()
     );
+
     const result = predict(
       home,
       away,
       leagueModel,
       DEFAULT_WEIGHTS
     );
+
     return send(res, 200, {
       homeWin: result.homeWin,
       draw: result.draw,
@@ -84,15 +88,15 @@ req.on('end', () => {
       league: leagueModel.id,
       modelVersion: VERSION
     });
+
   } catch (e) {
     return send(res, 400, {
       error: 'Invalid JSON'
     });
   }
 });
-return;
 
-}
+return;}
 
 // Method not allowed
 if (url === ‘/predict’ && method !== ‘POST’) {
@@ -118,6 +122,6 @@ console.log(‘Version:’, VERSION);
 server.on(‘error’, (e) => {
 console.error(’[server] Fatal:’, e.message);
 process.exit(1);
-});
-
-module.exports = server;
+});module.exports = server;
+  
+  
