@@ -51,13 +51,19 @@ async function router(req, res) {
   if (url === '/predict' && method === 'POST') {
     let raw = '';
 
-    req.on('data', chunk => {
-      raw += chunk;
-    });
+    let body = '';
 
-    req.on('end', () => {
-      try {
-        const data = JSON.parse(raw || '{}');
+req.on('data', chunk => {
+  body += chunk.toString();
+});
+
+req.on('end', () => {
+  try {
+    if (!body || body.trim() === '') {
+      return send(res, 400, { error: 'Empty body' });
+    }
+
+    const data = JSON.parse(body);
 
         if (!data.homeTeam || !data.awayTeam) {
           return send(res, 400, {
