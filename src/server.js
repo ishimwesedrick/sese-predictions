@@ -49,53 +49,52 @@ async function router(req, res) {
   }
 
   if (url === '/predict' && method === 'POST') {
-  let body = '';
+  let bodyChunks = [];
 
-  req.on('data', chunk => {
-    body += chunk;
-  });
+req.on('data', chunk => {
+  bodyChunks.push(chunk);
+});
 
-  req.on('end', () => {
-    try {
-      console.log('RAW BODY:', body); // DEBUG (important)
+req.on('end', () => {
+  try {
+    const body = Buffer.concat(bodyChunks).toString('utf8');
 
-      const data = JSON.parse(body);
+    const data = JSON.parse(body || '{}');
 
-      if (!data.homeTeam || !data.awayTeam) {
-        return send(res, 400, { error: 'Missing required fields' });
-      }
-
-      const home = buildStats(data.homeTeam);
-      const away = buildStats(data.awayTeam);
-
-      const leagueModel = getLeagueModel(
-        (data.league || 'DEFAULT').toUpperCase()
-      );
-
-      const result = predict(
-        home,
-        away,
-        leagueModel,
-        DEFAULT_WEIGHTS
-      );
-
-      return send(res, 200, {
-        homeWin: result.homeWin,
-        draw: result.draw,
-        awayWin: result.awayWin,
-        prediction: result.prediction,
-        confidence: result.confidence,
-        league: leagueModel.id,
-        modelVersion: VERSION
-      });
-
-    } catch (e) {
-      console.log('JSON ERROR:', e.message);
-      return send(res, 400, { error: 'Invalid JSON' });
+    if (!data.homeTeam || !data.awayTeam) {
+      return send(res, 400, { error: 'Missing required fields' });
     }
-  });
 
-  return;
+    const home = buildStats(data.homeTeam);
+    const away = buildStats(data.awayTeam);
+
+    const leagueModel = getLeagueModel(
+      (data.league || 'DEFAULT').toUpperCase()
+    );
+
+    const result = predict(
+      home,
+      away,
+      leagueModel,
+      DEFAULT_WEIGHTS
+    );
+
+    return send(res, 200, {
+      homeWin: result.homeWin,
+      draw: result.draw,
+      awayWin: result.awayWin,
+      prediction: result.prediction,
+      confidence: result.confidence,
+      league: leagueModel.id,
+      modelVersion: VERSION
+    });
+
+  } catch (e) {
+    return send(res, 400, { error: 'Invalid JSON' });
+  }
+});
+
+return;
 }
 
   return send(res, 404, {
