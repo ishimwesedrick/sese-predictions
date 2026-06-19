@@ -1,10 +1,10 @@
 req.on('data', chunk => {
-  body += chunk;
+  raw += chunk;
 });
 
 req.on('end', () => {
   try {
-    const data = JSON.parse(body || '{}');
+    const data = JSON.parse(raw || '{}');
 
     if (!data.homeTeam || !data.awayTeam) {
       return send(res, 400, {
@@ -12,23 +12,8 @@ req.on('end', () => {
       });
     }
 
-    const home = {
-      teamId: data.homeTeam,
-      form: ['W', 'D', 'L', 'W', 'D'],
-      goalsScored: 1.3,
-      goalsConceded: 1.3,
-      venuePoints: 1.2,
-      h2hScore: 0.5
-    };
-
-    const away = {
-      teamId: data.awayTeam,
-      form: ['W', 'D', 'L', 'W', 'D'],
-      goalsScored: 1.3,
-      goalsConceded: 1.3,
-      venuePoints: 1.2,
-      h2hScore: 0.5
-    };
+    const home = buildStats(data.homeTeam);
+    const away = buildStats(data.awayTeam);
 
     const leagueModel = getLeagueModel(
       (data.league || 'DEFAULT').toUpperCase()
@@ -47,6 +32,7 @@ req.on('end', () => {
       awayWin: result.awayWin,
       prediction: result.prediction,
       confidence: result.confidence,
+      league: leagueModel.id,
       modelVersion: VERSION
     });
 
